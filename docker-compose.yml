@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: enpal-coding-challenge-api
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:mypassword123!@host.docker.internal:5432/coding-challenge
+      - NODE_ENV=development
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

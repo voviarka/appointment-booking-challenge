@@ -1,0 +1,30 @@
+{
+    "sourceFile": "prisma/schema.prisma",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 3,
+            "patches": [
+                {
+                    "date": 1740404150875,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1740404381096,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -36,9 +36,9 @@\n   start_date       DateTime     @db.Timestamptz\n   end_date         DateTime     @db.Timestamptz\n   booked           Boolean      @default(false)\n   sales_manager    SalesManager @relation(fields: [sales_manager_id], references: [id])\n-  sales_manager_id Int\n+  sales_manager_id Int          @relation()\n   user             User?        @relation(fields: [user_id], references: [id])\n   user_id          Int?\n \n   @@map(\"slots\")\n"
+                },
+                {
+                    "date": 1740404391670,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -36,9 +36,9 @@\n   start_date       DateTime     @db.Timestamptz\n   end_date         DateTime     @db.Timestamptz\n   booked           Boolean      @default(false)\n   sales_manager    SalesManager @relation(fields: [sales_manager_id], references: [id])\n-  sales_manager_id Int          @relation()\n+  sales_manager_id Int          @relation(fields: [])\n   user             User?        @relation(fields: [user_id], references: [id])\n   user_id          Int?\n \n   @@map(\"slots\")\n"
+                },
+                {
+                    "date": 1740404400308,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -36,9 +36,9 @@\n   start_date       DateTime     @db.Timestamptz\n   end_date         DateTime     @db.Timestamptz\n   booked           Boolean      @default(false)\n   sales_manager    SalesManager @relation(fields: [sales_manager_id], references: [id])\n-  sales_manager_id Int          @relation(fields: [])\n+  sales_manager_id Int\n   user             User?        @relation(fields: [user_id], references: [id])\n   user_id          Int?\n \n   @@map(\"slots\")\n"
+                }
+            ],
+            "date": 1740404150875,
+            "name": "Commit-0",
+            "content": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client-js\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel SalesManager {\n  id               Int      @id @default(autoincrement())\n  name             String   @db.VarChar(250)\n  languages        String[]\n  products         String[]\n  customer_ratings String[]\n  slots            Slot[]\n\n  @@map(\"sales_managers\")\n}\n\nmodel User {\n  id       Int    @id @default(autoincrement())\n  name     String @db.VarChar(250)\n  email    String @db.VarChar(250) @unique\n  language String @db.VarChar(250)\n  slots    Slot[]\n\n  @@map(\"users\")\n}\n\nmodel Slot {\n  id               Int          @id @default(autoincrement())\n  start_date       DateTime     @db.Timestamptz\n  end_date         DateTime     @db.Timestamptz\n  booked           Boolean      @default(false)\n  sales_manager    SalesManager @relation(fields: [sales_manager_id], references: [id])\n  sales_manager_id Int\n  user             User?        @relation(fields: [user_id], references: [id])\n  user_id          Int?\n\n  @@map(\"slots\")\n}\n"
+        }
+    ]
+}

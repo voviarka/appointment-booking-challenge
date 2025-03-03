@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/slot/slot.controller.ts",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1740574773545,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1740574773545,
+            "name": "Commit-0",
+            "content": "import {\n  Controller,\n  Post,\n  Body,\n  UsePipes,\n  ValidationPipe,\n  HttpCode,\n} from '@nestjs/common';\nimport { ApiResponse } from '@nestjs/swagger';\nimport { SlotBookingsDto } from './dto/slot-bookings.dto';\nimport { BookedSlotDto } from './dto/booked-slot.dto';\nimport { SlotService } from './slot.service';\n\n@Controller('slot')\nexport class SlotController {\n  constructor(private readonly slotService: SlotService) {}\n\n  @Post('bookings')\n  @ApiResponse({\n    status: 200,\n    description: 'Returns available slots with counts',\n    type: [BookedSlotDto],\n  })\n  @HttpCode(200)\n  @UsePipes(new ValidationPipe({ transform: true }))\n  async bookSlot(\n    @Body() slotBookingsDto: SlotBookingsDto,\n  ): Promise<BookedSlotDto> {\n    return this.slotService.bookSlot(slotBookingsDto) as Promise<BookedSlotDto>;\n  }\n}\n"
+        }
+    ]
+}

@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SalesManager {
+  id               Int      @id @default(autoincrement())
+  name             String   @db.VarChar(250)
+  languages        String[]
+  products         String[]
+  customer_ratings String[]
+  slots            Slot[]
+
+  @@map("sales_managers")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String @db.VarChar(250)
+  email    String @unique @db.VarChar(250)
+  language String @db.VarChar(250)
+  slots    Slot[]
+
+  @@map("users")
+}
+
+model Slot {
+  id               Int          @id @default(autoincrement())
+  start_date       DateTime     @db.Timestamptz
+  end_date         DateTime     @db.Timestamptz
+  booked           Boolean      @default(false)
+  sales_manager    SalesManager @relation(fields: [sales_manager_id], references: [id])
+  sales_manager_id Int
+  user             User?        @relation(fields: [user_id], references: [id])
+  user_id          Int?
+
+  @@map("slots")
+}
