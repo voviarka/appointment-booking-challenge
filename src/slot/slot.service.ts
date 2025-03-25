@@ -41,6 +41,8 @@ export class SlotService {
               },
             });
 
+            this.logger.log(`Slot booked: ${bookedSlot.id}`);
+
             return bookedSlot as BookedSlotDto;
           }
         }

@@ -58,3 +58,4 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Prisma test artifacts
 prisma/*.test.db
 prisma/*.test.db-journal
+.lh
