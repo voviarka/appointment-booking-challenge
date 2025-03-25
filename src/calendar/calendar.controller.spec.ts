@@ -36,7 +36,8 @@ describe('CalendarController', () => {
 
       const expectedResult: AvailableSlotDto[] = [
         {
-          available_count: 1,
+          slot_ids: [1, 2],
+          available_count: 2,
           start_date: '2024-03-20T09:00:00Z',
         },
       ];

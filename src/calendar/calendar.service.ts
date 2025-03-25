@@ -36,17 +36,120 @@ export class CalendarService {
     }
 
     try {
-      const response = await this.prisma.$queryRaw<AvailableSlotDto[]>(
-        this.createSQLQuery(date, language, rating, products),
+      const startDate = new Date(date);
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 1);
+
+      // Find language, rating, and product IDs
+      const languageId = await this.prisma.language.findUnique({
+        where: { name: language },
+        select: { id: true },
+      });
+
+      const ratingId = await this.prisma.customerRating.findUnique({
+        where: { name: rating },
+        select: { id: true },
+      });
+
+      const productIds = await this.prisma.product.findMany({
+        where: {
+          name: {
+            in: products,
+          },
+        },
+        select: { id: true },
+      });
+
+      if (!languageId || !ratingId || productIds.length === 0) {
+        return [];
+      }
+
+      // Find sales managers that match the criteria
+      const salesManagers = await this.prisma.salesManager.findMany({
+        where: {
+          languages: {
+            some: {
+              languageId: languageId.id,
+            },
+          },
+          customerRatings: {
+            some: {
+              customerRatingId: ratingId.id,
+            },
+          },
+          products: {
+            some: {
+              productId: {
+                in: productIds.map(p => p.id),
+              },
+            },
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (salesManagers.length === 0) {
+        return [];
+      }
+
+      const salesManagerIds = salesManagers.map(sm => sm.id);
+
+      // Find available slots for these sales managers
+      const availableSlots = await this.prisma.slot.findMany({
+        where: {
+          salesManagerId: {
+            in: salesManagerIds,
+          },
+          booked: false,
+          start_date: {
+            gte: startDate,
+            lt: endDate,
+          },
+        },
+        orderBy: {
+          start_date: 'asc',
+        },
+      });
+
+      // Check for overlapping booked slots
+      const validSlots = await Promise.all(
+        availableSlots.map(async (slot) => {
+          const overlappingBookedSlot = await this.prisma.slot.findFirst({
+            where: {
+              salesManagerId: slot.salesManagerId,
+              booked: true,
+              start_date: {
+                lt: slot.end_date,
+              },
+              end_date: {
+                gt: slot.start_date,
+              },
+            },
+          });
+          return overlappingBookedSlot ? null : slot;
+        })
       );
 
-      const result = response.map(
-        ({ slot_ids, available_count, start_date }) => ({
-          slot_ids,
-          available_count: Number(available_count),
-          start_date: new Date(start_date).toISOString(),
-        }),
-      );
+      // Group valid slots by start time
+      const slotsByStartTime = validSlots
+        .filter(Boolean)
+        .reduce((acc, slot) => {
+          const startTimeStr = slot.start_date.toISOString();
+          if (!acc[startTimeStr]) {
+            acc[startTimeStr] = {
+              start_date: startTimeStr,
+              slot_ids: [],
+              available_count: 0,
+            };
+          }
+          acc[startTimeStr].slot_ids.push(slot.id);
+          acc[startTimeStr].available_count++;
+          return acc;
+        }, {} as Record<string, AvailableSlotDto>);
+
+      const result = Object.values(slotsByStartTime);
 
       await this.cacheManager.set(cacheKey, result);
 
@@ -79,40 +182,5 @@ export class CalendarService {
     }
 
     return null;
-  }
-
-  private createSQLQuery(
-    date: string,
-    language: Language,
-    rating: Rating,
-    products: Product[],
-  ): Prisma.Sql {
-    const startDate = new Date(date);
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 1);
-
-    return Prisma.sql`
-          SELECT ARRAY_AGG(s.id) AS slot_ids, 
-                 s.start_date,
-                 COUNT(*) AS available_count
-          FROM slots s
-                   JOIN sales_managers sm ON sm.id = s.sales_manager_id
-          WHERE s.booked = FALSE
-            AND s.start_date >= ${startDate}
-            AND s.start_date < ${endDate}
-            AND sm.languages && ${[language]}::VARCHAR[]
-            AND sm.customer_ratings && ${[rating]}::VARCHAR[]
-            AND sm.products @> ${products}::VARCHAR[]
-            AND NOT EXISTS (
-              SELECT 1
-              FROM slots s_overlap
-              WHERE s_overlap.sales_manager_id = s.sales_manager_id
-                AND s_overlap.booked = TRUE
-                AND s_overlap.start_date < s.end_date
-                AND s_overlap.end_date > s.start_date
-            )
-          GROUP BY s.start_date
-          ORDER BY s.start_date;    
-    `;
   }
 }

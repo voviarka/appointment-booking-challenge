@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class AvailableSlotDto {
   @ApiProperty({
     example: [3, 4],
-    description: 'ID of the slot',
+    description: 'IDs of available slots',
   })
   slot_ids: number[];
 
